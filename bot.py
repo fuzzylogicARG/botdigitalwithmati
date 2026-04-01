@@ -1,122 +1,83 @@
-import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
-TOKEN = "8227795621:AAEqrG82J5h8WSgYVYrM63Z7YCRGKgA5lQw"
+TOKEN = "PON_TU_TOKEN_AQUI"
 
 PORTFOLIO_URL = "https://fuzzylogicarg.github.io/PORTFOLIO/"
 TELEGRAM_USERNAME = "@digitalwithmati"
 EMAIL = "digitalwithmati@gmail.com"
 WHATSAPP = "+54 223 596 0733"
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO
-)
 
-WELCOME_TEXT = (
-    "🚀 *Welcome to DigitalWithMati*\n\n"
-    "I build landing pages, website improvements, automation systems, "
-    "and conversion-focused digital solutions.\n\n"
-    "Choose an option below."
-)
-
-SERVICES_TEXT = (
-    "🛠 *Services*\n\n"
-    "• Landing Pages\n"
-    "• Website Fixes\n"
-    "• UI/UX Improvements\n"
-    "• Automation Ideas\n"
-    "• Telegram Bot Setups\n"
-    "• Conversion-Focused Pages"
-)
-
-CONTACT_TEXT = (
-    "📩 *Contact*\n\n"
-    f"Telegram: {TELEGRAM_USERNAME}\n"
-    f"Email: {EMAIL}\n"
-    f"WhatsApp: {WHATSAPP}"
-)
-
-QUOTE_TEXT = (
-    "💬 *Get a Quote*\n\n"
-    "Send me a short description of your project:\n\n"
-    "• What you need\n"
-    "• Your goal\n"
-    "• If you already have a website or idea\n\n"
-    "You can contact me directly here:\n"
-    f"{TELEGRAM_USERNAME}"
-)
-
-
-def main_menu() -> InlineKeyboardMarkup:
+def start(update, context):
     keyboard = [
         [InlineKeyboardButton("🌐 View Portfolio", url=PORTFOLIO_URL)],
         [InlineKeyboardButton("🛠 Services", callback_data="services")],
         [InlineKeyboardButton("📩 Contact", callback_data="contact")],
-        [InlineKeyboardButton("💬 Get a Quote", callback_data="quote")],
+        [InlineKeyboardButton("💬 Get a Quote", callback_data="quote")]
     ]
-    return InlineKeyboardMarkup(keyboard)
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    update.message.reply_text(
+        "🚀 Welcome to DigitalWithMati\n\n"
+        "I build landing pages, automation systems, and revenue-focused digital solutions.\n\n"
+        "Choose an option:",
+        reply_markup=reply_markup
+    )
 
 
-def back_menu() -> InlineKeyboardMarkup:
-    keyboard = [
-        [InlineKeyboardButton("⬅ Back to Menu", callback_data="back")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.message:
-        await update.message.reply_text(
-            WELCOME_TEXT,
-            reply_markup=main_menu(),
-            parse_mode="Markdown"
-        )
-
-
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+def button(update, context):
     query = update.callback_query
-    if not query:
-        return
-
-    await query.answer()
+    query.answer()
 
     if query.data == "services":
-        await query.edit_message_text(
-            SERVICES_TEXT,
-            reply_markup=back_menu(),
-            parse_mode="Markdown"
+        text = (
+            "🛠 Services:\n\n"
+            "• Landing Pages\n"
+            "• Website Fixes\n"
+            "• UI/UX Improvements\n"
+            "• Automation Systems\n"
+            "• Telegram Bots\n"
         )
+
     elif query.data == "contact":
-        await query.edit_message_text(
-            CONTACT_TEXT,
-            reply_markup=back_menu(),
-            parse_mode="Markdown"
+        text = (
+            "📩 Contact:\n\n"
+            f"Telegram: {TELEGRAM_USERNAME}\n"
+            f"Email: {EMAIL}\n"
+            f"WhatsApp: {WHATSAPP}"
         )
+
     elif query.data == "quote":
-        await query.edit_message_text(
-            QUOTE_TEXT,
-            reply_markup=back_menu(),
-            parse_mode="Markdown"
-        )
-    elif query.data == "back":
-        await query.edit_message_text(
-            WELCOME_TEXT,
-            reply_markup=main_menu(),
-            parse_mode="Markdown"
+        text = (
+            "💬 Get a Quote:\n\n"
+            "Send me:\n"
+            "• What you need\n"
+            "• Your goal\n\n"
+            f"Contact me here: {TELEGRAM_USERNAME}"
         )
 
+    keyboard = [[InlineKeyboardButton("⬅ Back", callback_data="back")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-def run_bot() -> None:
-    app = Application.builder().token(TOKEN).build()
+    if query.data == "back":
+        start(query, context)
+    else:
+        query.edit_message_text(text=text, reply_markup=reply_markup)
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
 
-    print("Bot running...")
-    app.run_polling()
+def main():
+    updater = Updater(TOKEN, use_context=True)
+
+    dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CallbackQueryHandler(button))
+
+    updater.start_polling()
+    updater.idle()
 
 
 if __name__ == "__main__":
-    run_bot()
+    main()
